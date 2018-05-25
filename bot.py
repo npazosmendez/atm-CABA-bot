@@ -8,7 +8,7 @@ import os, sys
 import logging
 from datamanagement import *
 
-TOKEN_PATH = 'token.txt'
+TOKEN_PATH = 'token.dat'
 LOG_PATH = 'botLog.log'
 
 
@@ -23,12 +23,13 @@ def get_static_map_url(central_marker, other_markers=[]):
     """
     url = 'https://maps.googleapis.com/maps/api/staticmap'
     url += '?size=600x300'
-    url += '&markers=color:red|'+str(central_marker[0])+','+str(central_marker[1])
+    url += '&markers=color:red|'
+    url += str(central_marker[0])+','+str(central_marker[1])
     for coor in other_markers:
         url += '&markers=color:blue|label:A|'+str(coor[0])+','+str(coor[1])
     return url
 
-def network_try(closure, max_retries = 3):
+def network_try(closure, max_retries = 5):
     """
     Intenta ejecutar 'closure', reintentando hasta 'max_retries' veces en
     casos de fallo de red, según las excepciones de telegram.
@@ -53,10 +54,13 @@ def solicitar_ubicacion(bot, update):
     Le pide la ubicación al usuario, que debe enviarla voluntariamente
     presionando el botón.
     """
-    keyboard = [[telegram.KeyboardButton(text="Share location", request_location=True)]]
+    keyboard = [[telegram.KeyboardButton(text="Share location",
+                                         request_location=True)]]
     reply_markup = telegram.ReplyKeyboardMarkup(keyboard=keyboard)
     def send_msg():
-        bot.send_message(chat_id=update.message.chat_id, text="¡Ok! Mandame tu ubicación", reply_markup=reply_markup)
+        bot.send_message(chat_id=update.message.chat_id,
+                         text="¡Ok! Mandame tu ubicación",
+                         reply_markup=reply_markup)
     network_try(send_msg)
 
 def enviar_cajeros(bot, update, red_de_cajeros):
@@ -67,7 +71,8 @@ def enviar_cajeros(bot, update, red_de_cajeros):
     # Obtengo los cajeros cercanos
     coor = (update.message.location.latitude, update.message.location.longitude)
     logging.info('Buscando cajeros '+red_de_cajeros+' @ '+str(coor))
-    cajeros_cercanos = cajeros_mas_cercanos(red_de_cajeros,coor, distancia_minima=500, cota=3)
+    cajeros_cercanos = cajeros_mas_cercanos(red_de_cajeros,coor,
+                                            distancia_minima=500, cota=3)
 
     # Si no tiene cajeros, le digo
     if not cajeros_cercanos:
@@ -80,7 +85,8 @@ def enviar_cajeros(bot, update, red_de_cajeros):
     # Si tiene, le envío la lista y el mapa
     mensaje = ''
     for atm in cajeros_cercanos:
-        mensaje += '\xF0\x9F\x92\xB0'+atm.direccion+', '+atm.barrio+' | '+atm.banco+'\n'
+        mensaje += '\xF0\x9F\x92\xB0'+atm.direccion+', '
+        mensaje += atm.barrio+' | '+atm.banco+'\n'
     map_url = get_static_map_url(coor, [(atm.latitud,atm.longitud) for atm in cajeros_cercanos])
     logging.info('Intentando enviar cajeros y mapa')
     logging.info(mensaje)
@@ -174,13 +180,16 @@ def main():
         entry_points=[MessageHandler(Filters.all, bot_help)],
         states= {
             DEFAULT:
-                [CommandHandler('link', link),CommandHandler('banelco', banelco),CommandHandler('help',bot_help)],
+                [CommandHandler('link', link),
+                 CommandHandler('banelco', banelco),
+                 CommandHandler('help',bot_help)],
             LINK_ESPERANDO_UBICACION:
                 [MessageHandler(Filters.location, enviar_cajeros_link)],
             BANELCO_ESPERANDO_UBICACION:
                 [MessageHandler(Filters.location, enviar_cajeros_banelco)]
             },
-        fallbacks=[CommandHandler('cancel', cancel),MessageHandler(Filters.all, cancel)]
+        fallbacks=[CommandHandler('cancel', cancel),
+                   MessageHandler(Filters.all, cancel)]
     )
     dispatcher.add_handler(conv_handler)
     # Handler de errores
@@ -195,7 +204,7 @@ def main():
     schedule.every().tuesday.at("8:00").do(reabastecer_cajeros)
     schedule.every().wednesday.at("8:00").do(reabastecer_cajeros)
     schedule.every().thursday.at("8:00").do(reabastecer_cajeros)
-    schedule.every().friday.at("12:58").do(reabastecer_cajeros)
+    schedule.every().friday.at("13:39").do(reabastecer_cajeros)
 
     ## Verificar actualizaciones cada 5 minutos
     while True:

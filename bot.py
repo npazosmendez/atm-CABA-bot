@@ -204,7 +204,7 @@ def main():
     schedule.every().tuesday.at("8:00").do(reabastecer_cajeros)
     schedule.every().wednesday.at("8:00").do(reabastecer_cajeros)
     schedule.every().thursday.at("8:00").do(reabastecer_cajeros)
-    schedule.every().friday.at("13:39").do(reabastecer_cajeros)
+    schedule.every().friday.at("8:00").do(reabastecer_cajeros)
 
     ## Verificar actualizaciones cada 5 minutos
     while True:

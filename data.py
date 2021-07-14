@@ -7,9 +7,7 @@ def print_all():
     connection.text_factory = str
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM cajeros")
-    i = 0
-    for c in cursor:
-        i+=1
+    for i, c in enumerate(cursor, start=1):
         print(i)
         print(c)
 
